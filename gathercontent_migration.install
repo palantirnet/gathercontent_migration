@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Uninstall config.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function gathercontent_migration_uninstall() {
+  \Drupal::configFactory()->getEditable('gathercontent_migration.gathercontent')->delete();
+}
