@@ -1,0 +1,13 @@
+{
+    "name": "palantirnet/gathercontent_migration",
+    "description": "A Drupal 8 migration source plugin for the GatherContent API.",
+    "type": "drupal-module",
+    "authors": [
+        {
+            "name": "Bec White",
+            "email": "white@palantir.net"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
