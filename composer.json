@@ -9,5 +9,17 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": "true"
+    },
+    "repositories": {
+        "becw/gather-content-api": {
+            "type": "vcs",
+            "url": "git@github.com:becw/gather-content-api.git"
+        }
+    },
+    "require": {
+        "course-hero/gather-content-api": "dev-add-gc-templates"
+    }
 }
