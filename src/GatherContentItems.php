@@ -107,6 +107,10 @@ class GatherContentItems implements \Iterator {
     // Flatten all field values.
     $flat->fields = [];
     foreach ($item->getFields() as $f) {
+      if ($f->type == 'choice_checkbox') {
+        $f->value = array_filter(array_map(function($opt) { return $opt['selected'] ? $opt['label'] : NULL; }, $f->options));
+      }
+
       $flat->fields[$f->name] = $f->value;
       if ($f->label) {
         $flat->fields[$f->label] = $f->value;
