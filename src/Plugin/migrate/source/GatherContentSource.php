@@ -7,12 +7,10 @@
 
 namespace Drupal\gathercontent_migration\Plugin\migrate\source;
 
-use Drupal\gathercontent_migration\GatherContentItems;
-use Drupal\gathercontent_migration\GatherContentItemsFiltered;
 use Drupal\migrate\Plugin\migrate\source\SourcePluginBase;
 use Drupal\migrate\Plugin\MigrationInterface;
+use Drupal\migrate\Row;
 use GatherContent;
-use Symfony\Component\Finder\Iterator\CustomFilterIterator;
 
 /**
  * Source plugin for GatherContent items.
@@ -23,26 +21,48 @@ use Symfony\Component\Finder\Iterator\CustomFilterIterator;
  */
 class GatherContentSource extends SourcePluginBase {
 
+  // Required configuration parameters.
   protected $email;
   protected $api_key;
-  protected $project_name;
+
+  // Either project_id OR project_name + account_slug are required configuration
+  // parameters. In the latter case,
+  // GatherContentSource::initialializeConnection() will populate project_id.
   protected $project_id;
+  protected $project_name;
   protected $account_slug;
+
+  // Optional configuration parameters.
   protected $template_name;
   protected $template_id;
-  /** @var GatherContent\Model\Template */
+
+  /**
+   * @var GatherContent\Model\Template
+   * Loaded by GatherContentSource::initialializeConnection().
+   */
   protected $template;
 
-  /** @var GatherContentItemsFlat */
-  protected $items;
+  /**
+   * @var array|string
+   * Array of key => value pairs that items in this migration must match.
+   * If template_name or template_id is available, then template_id will be
+   * automatically added by GatherContentSource::initialializeConnection().
+   */
+  protected $filters;
 
+  /**
+   * {@inheritdoc}
+   */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, MigrationInterface $migration) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $migration);
 
     $this->skipCount = TRUE;
+    $this->trackChanges = TRUE;
 
     $this->email = \Drupal::config('gathercontent_migration.gathercontent')->get('email');
     $this->api_key = \Drupal::config('gathercontent_migration.gathercontent')->get('api_key');
+
+    $this->filters = isset($configuration['filters']) ? $configuration['filters'] : [];
 
     $this->account_slug = isset($configuration['account_slug']) ? $configuration['account_slug'] : NULL;
     $this->project_name = isset($configuration['project_name']) ? $configuration['project_name'] : NULL;
@@ -60,60 +80,218 @@ class GatherContentSource extends SourcePluginBase {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function __toString() {
     return 'GatherContent';
   }
 
   /**
-   * @inheritDoc
+   * @param string $account_slug
+   * @param string $project_name
+   * @return GatherContent\Model\Project
+   * @throws \Exception
    */
-  protected function initializeIterator() {
-    if ($this->template_name || $this->template_id) {
-      $this->initializeTemplate();
+  protected function retrieveProject($account_slug, $project_name) {
+    $account = $this->retrieveAccount($account_slug);
+
+    $filter = function ($project) use ($project_name) { return $project->name == $project_name; };
+    $project = current(array_filter($account->projects(), $filter));
+
+    if ($project) {
+      return $project;
     }
 
-    GatherContent\Configuration::configure($this->email, $this->api_key);
-
-    $iterator = FALSE;
-    if ($this->project_id) {
-      $iterator = new GatherContentItems($this->project_id);
-    }
-    elseif ($this->account_slug && $this->project_name) {
-      $iterator = GatherContentItems::factory($this->account_slug, $this->project_name);
-    }
-
-    if ($iterator && $this->template_id) {
-      $template_id = $this->template_id;
-      $filter = function($item) use ($template_id) { return $item->template_id == $template_id; };
-      $iterator = new GatherContentItemsFiltered($iterator, $filter);
-    }
-
-    return $iterator;
+    throw new \Exception('Failed to load GatherContent project.');
   }
 
-  public function initializeTemplate() {
-    if (!$this->template) {
-      GatherContent\Configuration::configure($this->email, $this->api_key);
+  /**
+   * @param string $account_slug
+   * @return GatherContent\Model\Account
+   * @throws \Exception
+   */
+  protected function retrieveAccount($account_slug) {
+    $accounts = new GatherContent\Model\AccountCollection();
+    $account = $accounts->findBySlug($account_slug);
 
-      if ($this->template_name && !$this->template_id) {
-        $this->template = (new GatherContent\Model\TemplateCollection())->findByName($this->project_id, $this->template_name);
+    if ($account) {
+      return $account;
+    }
+
+    throw new \Exception('Failed to load GatherContent account.');
+  }
+
+  /**
+   * @param $template_id
+   * @return \GatherContent\Model\Template
+   */
+  protected function retrieveTemplate($template_id) {
+    return GatherContent\Model\Template::retrieveTemplate($template_id);
+  }
+
+  /**
+   * @param $project_id
+   * @param $template_name
+   * @return mixed
+   */
+  protected function retrieveTemplateByName($project_id, $template_name) {
+    $templates = new GatherContent\Model\TemplateCollection();
+    return $templates->findByName($project_id, $template_name);
+  }
+
+  /**
+   * @param $project_id
+   * @return array
+   */
+  protected function retrieveItems($project_id) {
+    $items = new GatherContent\Model\ItemCollection();
+    return $items->forProjectId($project_id);
+  }
+
+  /**
+   * @param $item_id
+   * @return \GatherContent\Model\Item
+   */
+  protected function retrieveItem($item_id) {
+    print "retrieving item $item_id\n";
+    return GatherContent\Model\Item::retrieveItem($item_id);
+  }
+
+  /**
+   * @param $item_id
+   * @return array
+   */
+  protected function retrieveItemFiles($item_id) {
+    print "retrieving files for item $item_id\n";
+    $files = new GatherContent\Model\FileCollection();
+    return $files->forItemId($item_id);
+  }
+
+  /**
+   * @return \Closure
+   */
+  protected function getFilter() {
+    $this->initializeConnection();
+
+    $filters = $this->filters;
+    return function ($item) use ($filters) {
+      foreach ($filters as $k => $v) {
+        if ($item->$k != $v) {
+          return FALSE;
+        }
+      }
+      return TRUE;
+    };
+  }
+
+  /**
+   * Make sure we have a project_id and template_id.
+   */
+  protected function initializeConnection() {
+    GatherContent\Configuration::configure($this->email, $this->api_key);
+
+    if (!$this->project_id) {
+      $project = $this->retrieveProject($this->account_slug, $this->project_name);
+      $this->project_id = $project->id;
+    }
+
+    if (!$this->template) {
+      if ($this->template_id) {
+        $this->template = $this->retrieveTemplate($this->template_id);
+      }
+      elseif ($this->template_name) {
+        $this->template = $this->retrieveTemplateByName($this->project_id, $this->template_name);
         $this->template_id = $this->template->id;
       }
-      elseif ($this->template_id) {
-        $this->template = (new GatherContent\Model\Template())->retrieveTemplate($this->template_id);
+
+      $this->filters['template_id'] = $this->template_id;
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  protected function initializeIterator() {
+    $this->initializeConnection();
+
+    // Retrieve the items from GatherContent.
+    $items = $this->retrieveItems($this->project_id);
+    // Remove items based on template_id or other filters.
+    $items = array_filter($items, $this->getFilter());
+    // Clean array keys.
+    $items = array_values($items);
+    // All data should be arrays.
+    $items = array_map(function ($item) { return (array) $item; }, $items);
+
+    return new \ArrayIterator($items);
+  }
+
+  /**
+   * Load full item content and files from GatherContent.
+   *
+   * @param \Drupal\migrate\Row $row
+   */
+  protected function expandRow(Row $row) {
+    $item_id = $row->getSourceProperty('id');
+
+    $item = $this->retrieveItem($item_id);
+    $files = $this->retrieveItemFiles($item_id);
+    $fields = $item->getFields();
+
+    // Flatten field values.
+    $field_values = [];
+    foreach ($fields as $field) {
+      $value = $field->value;
+
+      if ($field->type == 'files') {
+        // Match files to the field in which they appear.
+        $value = [];
+        foreach ($files as $file) {
+          if ($file->field == $field->name) {
+            $value[] = (array) $file;
+          }
+        }
+      }
+      elseif (strpos($field->type, 'choice_') === 0) {
+        // Flatten multiple choice values.
+        $value = array_filter(array_map(function($opt) { return $opt['selected'] ? $opt['label'] : NULL; }, $field->options));
+      }
+
+      // Provide IDs as field names for stability.
+      $field_values[$field->name] = $value;
+
+      // ... but also provide labels as field names for ease of use.
+      if ($field->label) {
+        $field_values[$field->label] = $value;
       }
     }
+
+    $row->setSourceProperty('fields', $field_values);
+    $row->setSourceProperty('status', $item->status['data']['name']);
+    $row->setSourceProperty('expanded', TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function prepareRow(Row $row) {
+    $ret = parent::prepareRow($row);
+
+    // Only fetch the full item information if we really really need to.
+    if ($ret === TRUE && ($row->changed() || $row->needsUpdate()) && !$row->getSourceProperty('expanded')) {
+      $this->expandRow($row);
+    }
+
+    return $ret;
   }
 
   /**
    * {@inheritdoc}
    */
   public function fields() {
-    $this->initializeTemplate();
-    if ($this->template) {
+    $this->initializeConnection();
 
+    if ($this->template) {
       $template_fields = [];
 
       $fields = $this->template->getFields();
