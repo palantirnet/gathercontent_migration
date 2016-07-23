@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Contains \Drupal\gathercontent_migration\Plugin\migrate\process\Dump.
+ * Contains \Drupal\gathercontent_migration\Plugin\migrate\process\GatherContentExtractLinks.
  */
 
 namespace Drupal\gathercontent_migration\Plugin\migrate\process;
