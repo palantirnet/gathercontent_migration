@@ -25,6 +25,9 @@ class GatherContentSource extends SourcePluginBase {
   protected $email;
   protected $api_key;
 
+  // Whether to load the full item content.
+  protected $expand_items = TRUE;
+
   // Either project_id OR project_name + account_slug are required configuration
   // parameters. In the latter case,
   // GatherContentSource::initialializeConnection() will populate project_id.
@@ -69,6 +72,8 @@ class GatherContentSource extends SourcePluginBase {
     $this->project_id = isset($configuration['project_id']) ? $configuration['project_id'] : NULL;
     $this->template_name = isset($configuration['template_name']) ? $configuration['template_name'] : NULL;
     $this->template_id = isset($configuration['template_id']) ? $configuration['template_id'] : NULL;
+
+    $this->expand_items = isset($configuration['expand_items']) ? $configuration['expand_items'] : TRUE;
 
     if (empty($this->email) || empty($this->api_key)) {
       throw new \Exception('Missing GatherContent API connection in gathercontent_migration module configuration; email and api_key are required.');
@@ -278,7 +283,7 @@ class GatherContentSource extends SourcePluginBase {
     $ret = parent::prepareRow($row);
 
     // Only fetch the full item information if we really really need to.
-    if ($ret === TRUE && ($row->changed() || $row->needsUpdate()) && !$row->getSourceProperty('expanded')) {
+    if ($this->expand_items && $ret === TRUE && ($row->changed() || $row->needsUpdate()) && !$row->getSourceProperty('expanded')) {
       $this->expandRow($row);
     }
 
