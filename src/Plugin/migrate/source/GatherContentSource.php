@@ -296,23 +296,54 @@ class GatherContentSource extends SourcePluginBase {
   public function fields() {
     $this->initializeConnection();
 
-    if ($this->template) {
-      $template_fields = [];
+    $fields = $this->configuration['fields'];
 
-      $fields = $this->template->getFields();
-      foreach ($fields as $f) {
-        $template_fields[$f->name] = $f->label;
+    $fields['id'] = 'Item ID';
+    $fields['project_id'] = 'Project ID';
+    $fields['parent_id'] = 'Parent item ID';
+    $fields['template_id'] = 'Template ID';
+    $fields['position'] = 'Position/order in the item list';
+    $fields['name'] = 'Item name';
+    $fields['notes'] = 'Notes';
+    $fields['type'] = 'Generally just "item"';
+    $fields['overdue'] = 'Overdue; true or false';
+    $fields['created_at/date'] = 'Created date, as YYYY-MM-DD HH:MM:SS.000000';
+    $fields['created_at/timezone_type'] = 'Timezone type; generally "3"';
+    $fields['created_at/timezone'] = 'Timezone code; generally "UTC"';
+    $fields['updated_at/date'] = 'Update date';
+    $fields['updated_at/timezone_type'] = 'Timezone type';
+    $fields['updated_at/timezone'] = 'Timezone code';
+    $fields['status/data/id'] = 'Current status ID';
+    $fields['status/data/is_default'] = 'Whether the status is the default status; true or false';
+    $fields['status/data/position'] = 'Position of the status in the status list';
+    $fields['status/data/color'] = 'Status color';
+    $fields['status/data/name'] = 'Status name';
+    $fields['status/data/description'] = 'Status description';
+    $fields['status/data/can_edit'] = 'Whether the current account can edit items with this status; true or false';
+    $fields['due_dates/data/0/status_id'] = 'ID of a status with a due date for this item';
+    $fields['due_dates/data/0/overdue'] = 'Is this item overdue for this status; true or false';
+    $fields['due_dates/data/0/due_date/date'] = 'Due date';
+    $fields['due_dates/data/0/due_date/timezone_type'] = 'Timezone type';
+    $fields['due_dates/data/0/due_date/timezone'] = 'Timezone code';
+
+    if ($this->expand_items) {
+      $fields['status'] = 'Name of the current item status';
+      $fields['expanded'] = 'Whether the full item data has been loaded; generally true';
+      $fields['fields'] = 'Array of field values';
+    }
+
+    if ($this->expand_items && $this->template) {
+      $template_fields = $this->template->getFields();
+      foreach ($template_fields as $f) {
+        $fields["fields/{$f->name}"] = $f->label;
 
         if ($f->label) {
-          $template_fields[$f->label] = $f->label;
+          $fields["fields/{$f->label}"] = $f->label;
         }
       }
+    }
 
-      return $template_fields;
-    }
-    else {
-      return $this->configuration['fields'];
-    }
+    return $fields;
   }
 
   /**
