@@ -20,6 +20,6 @@
         }
     },
     "require": {
-        "course-hero/gather-content-api": "dev-add-gc-templates"
+        "course-hero/gather-content-api": "dev-master"
     }
 }
