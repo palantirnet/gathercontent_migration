@@ -51,7 +51,8 @@ class GatherContentSource extends SourcePluginBase {
    * If template_name or template_id is available, then template_id will be
    * automatically added by GatherContentSource::initialializeConnection().
    */
-  protected $filters;
+  protected $include_filters;
+  protected $exclude_filters;
 
   /**
    * {@inheritdoc}
@@ -65,7 +66,8 @@ class GatherContentSource extends SourcePluginBase {
     $this->email = \Drupal::config('gathercontent_migration.gathercontent')->get('email');
     $this->api_key = \Drupal::config('gathercontent_migration.gathercontent')->get('api_key');
 
-    $this->filters = isset($configuration['filters']) ? $configuration['filters'] : [];
+    $this->include_filters = isset($configuration['include_filters']) ? $configuration['include_filters'] : [];
+    $this->exclude_filters = isset($configuration['exclude_filters']) ? $configuration['exclude_filters'] : [];
 
     $this->account_slug = isset($configuration['account_slug']) ? $configuration['account_slug'] : NULL;
     $this->project_name = isset($configuration['project_name']) ? $configuration['project_name'] : NULL;
@@ -175,16 +177,27 @@ class GatherContentSource extends SourcePluginBase {
   /**
    * @return \Closure
    */
-  protected function getFilter() {
+  protected function getItemsFilter() {
     $this->initializeConnection();
 
-    $filters = $this->filters;
-    return function ($item) use ($filters) {
-      foreach ($filters as $k => $v) {
-        if ($item->$k != $v) {
+    $include_filters = $this->include_filters;
+    $exclude_filters = $this->exclude_filters;
+
+    return function ($item) use ($include_filters, $exclude_filters) {
+      foreach ($include_filters as $k => $v) {
+        $v = is_array($v) ? $v : [$v];
+        if (!in_array($item->$k, $v)) {
           return FALSE;
         }
       }
+
+      foreach ($exclude_filters as $k => $v) {
+        $v = is_array($v) ? $v : [$v];
+        if (in_array($item->$k, $v)) {
+          return FALSE;
+        }
+      }
+
       return TRUE;
     };
   }
@@ -208,8 +221,10 @@ class GatherContentSource extends SourcePluginBase {
         $this->template = $this->retrieveTemplateByName($this->project_id, $this->template_name);
         $this->template_id = $this->template->id;
       }
+    }
 
-      $this->filters['template_id'] = $this->template_id;
+    if ($this->template_id) {
+      $this->include_filters['template_id'] = $this->template_id;
     }
   }
 
@@ -222,7 +237,7 @@ class GatherContentSource extends SourcePluginBase {
     // Retrieve the items from GatherContent.
     $items = $this->retrieveItems($this->project_id);
     // Remove items based on template_id or other filters.
-    $items = array_filter($items, $this->getFilter());
+    $items = array_filter($items, $this->getItemsFilter());
     // Clean array keys.
     $items = array_values($items);
     // All data should be arrays.
