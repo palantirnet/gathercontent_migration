@@ -1,0 +1,74 @@
+# This example migration configuration requires the migrate_plus module.
+# Drush commands to list and run migrations are provided by migrate_tools.
+id: gathercontent_items
+label: GatherContent Items
+
+source:
+  # This is the plugin provided by this module.
+  plugin: gathercontent
+
+  # The plugin requires either a project_id OR project_name + account_stub.
+  project_id: 98765
+  # If you do not know your project_id, you may use project_name and
+  # account_stub instead. The account stub is the subdomain used in your
+  # GatherContent URL when you log in, e.g. https://mycompany.gathercontent.com
+  # project_name: My GatherContent Project
+  # account_stub: mycompany
+
+  # Optional. Providing a template_name will filter the migration to items using
+  # only this template. It will also allow you to get more complete information
+  # about the available source fields when you use the
+  # `drush migrate-fields-source` command (provided by the migrate_tools
+  # module).
+  template_name: Profile
+  # As an alternative, you may also provide your template_id directly.
+  # template_id: 1234
+
+  # Filters allow you to include and exclude GatherContent items based on
+  # specific properties. You may match on a single value, or on a set of values.
+  include_filters:
+    # Include only items whose status is either "Approved" or "Live".
+    status:
+      - 'Approved'
+      - 'Live'
+  exclude_filters:
+    # Exclude the content item with the name "About Us"
+    name: 'About Us'
+    # Exclude any items with a specific parent.
+    parent_id: 5678
+
+  # These are used in the process section below.
+  constants:
+    bundle: page
+    format: basic_html
+    file_location: migrated_images
+
+process:
+  title: name
+  type: 'constants/bundle'
+  body/value: 'fields/Body'
+  body/format: 'constants/format'
+  # In GatherContent, even plain text field content is sent over with markup.
+  # So for a plain text field in Drupal, this is a simple way to strip those
+  # tags.
+  field_lede:
+    plugin: callback
+    callable: strip_tags
+    source: 'fields/Biography Lede'
+  # This process plugin is included in this module, and allows you to extract
+  # links from markup into a Drupal links field.
+  field_links:
+    plugin: gathercontent_extract_links
+    source: 'fields/External Links'
+  # This process plugin is included in this module, and allows you to copy files
+  # from a remote source like GatherContent.
+  field_image:
+    plugin: gathercontent_retrieve_file
+    source: 'fields/Image/0/url'
+    path: 'constants/file_location'
+    filename: 'fields/Image/0/filename'
+
+destination:
+  plugin: entity:node
+
+migration_dependencies: { }

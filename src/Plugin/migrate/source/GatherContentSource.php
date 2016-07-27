@@ -160,7 +160,6 @@ class GatherContentSource extends SourcePluginBase {
    * @return \GatherContent\Model\Item
    */
   protected function retrieveItem($item_id) {
-    print "retrieving item $item_id\n";
     return GatherContent\Model\Item::retrieveItem($item_id);
   }
 
@@ -169,7 +168,6 @@ class GatherContentSource extends SourcePluginBase {
    * @return array
    */
   protected function retrieveItemFiles($item_id) {
-    print "retrieving files for item $item_id\n";
     $files = new GatherContent\Model\FileCollection();
     return $files->forItemId($item_id);
   }

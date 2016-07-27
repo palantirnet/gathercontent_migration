@@ -1,0 +1,62 @@
+# This example migration configuration requires the migrate_plus module.
+# Drush commands to list and run migrations are provided by migrate_tools.
+id: gathercontent_menu_links
+label: GatherContent Menu Links
+
+source:
+  plugin: gathercontent
+  project_id: 98765
+  exclude_filters:
+    # If you're using an "Event" template in GatherContent, but your events
+    # should not appear in your menu, you can filter out all items using that
+    # template.
+    template_id:
+      - 123456
+    # If you use a "Utility Links" parent item in GatherContent to organize
+    # pages like the terms of use and privacy policy pages, you might want to
+    # exclude the "Utility Links" item and its children from Drupal's main menu.
+    id: 234567
+    parent_id: 234567
+  constants:
+    # This is the machine name of a menu, which must exist before running the
+    # migration.
+    menu: gathercontent
+    base_path: internal:/node/
+
+process:
+  # As an alternative to hard coding the menu name in the source plugin using
+  # 'constants/menu', you could use the static_map plugin to translate from
+  # parent_id to Drupal menu names: https://www.drupal.org/node/2143521
+  menu_name: constants/menu
+  title: name
+  weight: position
+  parent:
+    plugin: menu_link_parent
+    source:
+     - parent_id
+  # The migration plugin also allows multiple source migrations, in case you're
+  # using multiple migrations to import your GatherContent items.
+  nid:
+    plugin: migration
+    migration: gathercontent_items
+    source: id
+  # Items that don't match a migrated node will link to the home page.
+  'link/uri':
+    -
+      plugin: skip_on_empty
+      method: process
+      source: @nid
+    -
+      plugin: concat
+      source:
+        - constants/base_path
+        - @nid
+
+destination:
+  plugin: entity:menu_link_content
+  default_bundle: menu_link_content
+  no_stub: true
+
+migration_dependencies:
+  required:
+    - gathercontent_items

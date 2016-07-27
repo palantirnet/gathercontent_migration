@@ -23,8 +23,6 @@ use Drupal\migrate\Row;
 class GatherContentRetrieveFile extends ProcessPluginBase {
 
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
-  print "making file\n";
-  print_r($value);
     if (empty($value)) {
       // Skip this item if there's no URL.
       throw new MigrateSkipProcessException();
