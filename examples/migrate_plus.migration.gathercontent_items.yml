@@ -54,7 +54,7 @@ process:
   field_lede:
     plugin: callback
     callable: strip_tags
-    source: 'fields/Biography Lede'
+    source: 'fields/Lede'
   # This process plugin is included in this module, and allows you to extract
   # links from markup into a Drupal links field.
   field_links:
