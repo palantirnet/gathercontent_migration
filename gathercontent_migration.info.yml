@@ -1,7 +1,7 @@
-name: gathercontent_migration
-type: module
+name: GatherContent Migration
 description: Provides a source plugin to migrate items from GatherContent.
+type: module
 core: 8.x
-package: Custom
+package: GatherContent
 dependencies:
   - migrate

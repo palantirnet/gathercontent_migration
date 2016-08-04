@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Contains \Drupal\gathercontent_migration\Plugin\migrate\source\GatherContent.
