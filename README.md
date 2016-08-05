@@ -1,9 +1,15 @@
 # GatherContent Migration
 
-A Drupal 8 migration source plugin for the GatherContent API.
+A Drupal 8 migration source plugin for the GatherContent API. Using this module and [Migrate Plus](https://www.drupal.org/project/migrate_plus), you can write `.yml` migration configurations that import content from GatherContent to Drupal content, including nodes, taxonomy terms, and menu items.
 
-* [Migration source plugins](https://www.drupal.org/node/2129649)
-* [GatherContent API documentation](https://gathercontent.com/developers/)
+### Examples
+
+For examples of how to use this migration source, see:
+
+* [examples/migrate_plus.migration.gathercontent_items.yml](examples/migrate_plus.migration.gathercontent_items.yml)
+* [examples/migrate_plus.migration.gathercontent_menu_links.yml](migrate_plus.migration.gathercontent_menu_links.yml)
+
+### Configuration
 
 You'll need to manually configure your GatherContent API credentials in order to use this module; there is currently no admin UI.
 
@@ -16,7 +22,7 @@ You'll need to manually configure your GatherContent API credentials in order to
   $config['gathercontent_migration.gathercontent']['api_key'] = 'YOUR-KEY-HERE';
  ```
 
-For examples of how to use this migration source, see:
+### Resources
 
-* [examples/migrate_plus.migration.gathercontent_items.yml](examples/migrate_plus.migration.gathercontent_items.yml)
-* [examples/migrate_plus.migration.gathercontent_menu_links.yml](migrate_plus.migration.gathercontent_menu_links.yml)
+* [Migration source plugins](https://www.drupal.org/node/2129649)
+* [GatherContent API documentation](https://gathercontent.com/developers/)
