@@ -1,3 +1,5 @@
+# Copyright 2016 Palantir.net, Inc.
+
 name: GatherContent Migration
 description: Provides a source plugin to migrate items from GatherContent.
 type: module

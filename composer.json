@@ -2,6 +2,7 @@
     "name": "palantirnet/gathercontent_migration",
     "description": "A Drupal 8 migration source plugin for the GatherContent API.",
     "license": "GPL-2.0+",
+    "copyright": "Copyright 2016 Palantir.net, Inc.",
     "type": "drupal-module",
     "authors": [
         {

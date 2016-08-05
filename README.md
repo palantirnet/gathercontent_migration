@@ -26,3 +26,7 @@ You'll need to manually configure your GatherContent API credentials in order to
 
 * [Migration source plugins](https://www.drupal.org/node/2129649)
 * [GatherContent API documentation](https://gathercontent.com/developers/)
+
+### Copyright
+
+Copyright 2016 Palantir.net, Inc.
