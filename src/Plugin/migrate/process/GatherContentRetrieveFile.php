@@ -4,6 +4,8 @@
  * Contains \Drupal\gathercontent_migration\Plugin\migrate\process\GatherContentRetrieveFile.
  *
  * @see https://evolvingweb.ca/blog/bringing-files-along-for-ride-to-d8
+ *
+ * Copyright 2016 Palantir.net, Inc.
  */
 
 namespace Drupal\gathercontent_migration\Plugin\migrate\process;
