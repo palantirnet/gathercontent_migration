@@ -1,3 +1,5 @@
+# Copyright 2016 Palantir.net, Inc.
+
 # This example migration configuration requires the migrate_plus module.
 # Drush commands to list and run migrations are provided by migrate_tools.
 id: gathercontent_menu_links

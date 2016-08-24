@@ -2,6 +2,8 @@
 /**
  * @file
  * Contains \Drupal\gathercontent_migration\Plugin\migrate\source\GatherContent.
+ *
+ * Copyright 2016 Palantir.net, Inc.
  */
 
 namespace Drupal\gathercontent_migration\Plugin\migrate\source;
